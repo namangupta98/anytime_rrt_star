@@ -17,5 +17,5 @@ git clone https://github.com/namangupta98/anytime_rrt-star
 ```
 cd ~/<ROS_Workspace>
 source devel/setup.bash
-catkin_make
+roslaunch anytime_rrt-star launcher.launch
 ```
