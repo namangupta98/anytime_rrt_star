@@ -1,2 +1,21 @@
-# anytime_rrt
-This is a coursework project for ENPM661: Planning for Autonomous Robots
+# Anytime RRT Star - An extended RRT star
+
+## Overview
+
+## Dependencies
+
+## Install Introduction
+
+## Run Instructions
+
+Navigate to your ROS workspace/src directory and clone the repository. Type 
+```
+cd <ROS_Workspace>/src
+git clone https://github.com/namangupta98/anytime_rrt-star
+```
+- For Team Members
+```
+cd ~/<ROS_Workspace>
+source devel/setup.bash
+catkin_make
+```
