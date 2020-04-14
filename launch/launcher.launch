@@ -10,7 +10,7 @@
 	<!-- We resume the logic in empty_world.launch -->
 
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">
-		<arg name="world_name" value="$(find a-star-turtlebot)/worlds/map.world"/>
+		<arg name="world_name" value="$(find anytim_rrt-star)/worlds/map.world"/>
 	</include>
 
 	<param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
