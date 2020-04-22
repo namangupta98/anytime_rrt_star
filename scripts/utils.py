@@ -42,10 +42,24 @@ def nearest_point(p, point, alpha = 5):
             dist = new_dist
     return p[index]
 
-def in_obstacle(cur_point):
+def in_obstacle(cur_point,r,c):
 	'''
-	Define this function to return if a point is in obstacle space or not
+	returns if a point is in obstacle space or not
+
+	cur_point -> current state
+	r,c -> radius and clearnace
+
+	return boolean
 	'''
+	x,y = cur_point.x, cur_point.y
+    return (x)*(x) + (y)*(y) <= (1+r+c)*(1+r+c) or\
+    (x-2)*(x-2) + (y-3)*(y-3) <= (1+r+c)*(1+r+c) or\
+    (x-2)*(x-2) + (y+3)*(y+3) <= (1+r+c)*(1+r+c)or\
+    (x+2)*(x+2) + (y+3)*(y+3) <= (1+r+c)*(1+r+c) or\
+    x<-5-r-c or x>5+r+c or y<-5-r-c or y>5+r+c or\
+    (x>=-4.75-r-c and x<=-3.25+r+c and y>= -0.75-r-c and y<= 0.75+r+c) or\
+    (x>=-2.75-r-c and x<=-1.25+r+c and y>= 2.25-r-c and y<= 3.75+r+c) or\
+    (x>=3.25-r-c and x<=4.75+r+c and y>= -0.75-r-c and y<= 0.75+r+c)
     return False
 
 def get_children(cur_point, rpm1, rpm2,r,c,wr,l, dt=1):
@@ -92,3 +106,23 @@ def get_children(cur_point, rpm1, rpm2,r,c,wr,l, dt=1):
         if not in_obstacle(new_state): children.append(new_state)
         
     return children 
+
+
+'''
+SAMPLE TRIAL
+
+state = [point(-4,-4,0)]
+goal = point(4,4,0)
+img = np.ones((200,200))*255
+for i in range(2000):
+    rndm_node = point(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2*pi-pi)
+    nn = nearest_point(state, rndm_node)
+    children = get_children(nn, 30, 40,0,0,0.066,0.16, dt = 1) # These values are with respect to turtlebot3 burger
+    if len(children)!=0: 
+        state.append(nearest_point(children, rndm_node))
+        img = cv2.line(img,(int(nn.x*20)+100,int(nn.y*20)+100),(int(state[-1].x*20)+100,int(state[-1].y*20)+100),0, 1)
+    cv2.imshow('rrt', img)
+    cv2.waitKey(10)
+cv2.destroyAllWindows()
+
+'''
