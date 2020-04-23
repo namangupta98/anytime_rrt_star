@@ -9,51 +9,53 @@ import rospkg
 # function to get Cross-Track Error
 def getCTE(current_pose):
 
-	# coordinates of start point
-	start_pose = (-4, -4)
+    # coordinates of start point
+    start_pose = (-4, -4)
 
-	# coordinates of goal point
-	goal_pose = (-3, -3)
+    # coordinates of goal point
+    goal_pose = (-3, -3)
 
-	# Kp error
-	cte = (((current_pose[1] - start_pose[1])*(goal_pose[0] - start_pose[0])) - \
-		((current_pose[0] - start_pose[0])*(goal_pose[1] - start_pose[0])))/\
-		(((goal_pose[0] - start_pose[0])**2) + ((goal_pose[1] - start_pose[1])**2))
+    # Kp error
+    cte = (((current_pose[1] - start_pose[1])*(goal_pose[0] - start_pose[0])) - \
+        ((current_pose[0] - start_pose[0])*(goal_pose[1] - start_pose[0])))/\
+        (((goal_pose[0] - start_pose[0])**2) + ((goal_pose[1] - start_pose[1])**2))
 
-	return cte
+    return cte
 
 
 # function to get angular velocity
-def control(error, prev_error=0, summ=0):
-	
-	# PID parameters
-	Kp, Kd, Ki = 1, 0, 0
+def control(error, paramet, errors):
 
-	# angular velocity
-	omega = Kp*error + Kd*(error - prev_error) + Ki*summ
+    # angular velocity
+    omega = paramet[0]*error + paramet[1]*(error - errors[0]) + paramet[2]*errors[1]
 
-	# for Kd and Ki error
-	summ += error
-	prev_error = error
+    # for Kd and Ki error
+    errors[1] += error
+    errors[0] = error
 
-	return omega, summ, prev_error
+    return omega, errors
 
 
 # function to move turtlebot3
-def runner():
+def runner(parameters, errors):
 
     # declaring object for class Twist
     msg = Twist()
     odom = Odometry()
 
+    # loop rate
+    rate = rospy.Rate(1)
+
     # get current pose
     current_position = (odom.pose.pose.position.x, odom.pose.pose.position.y)
+    print('current_position', current_position)
 
     # getting error
     error = getCTE(current_position)
+    print('error', error)
 
     # getting angular velocity
-    angular_velocity, Ki_error, Kd_error =  control(error, Ki_error, Kd_error)
+    angular_velocity, errors = control(error, parameters, errors)
 
     # assign angular velocity
     msg.angular.z = angular_velocity
@@ -63,6 +65,8 @@ def runner():
     rospy.loginfo(msg)
     pub.publish(msg)
 
+    rate.sleep()
+
 
 if __name__ == '__main__':
 
@@ -70,15 +74,18 @@ if __name__ == '__main__':
     rospy.init_node('controller', anonymous=True)
 
     # publisher object publishing to command velocity
-    pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+    pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
     # initialize subscriber node to get robot's odometry
-    rospy.Subscriber('odom', Odometry, queue_size=10)
+    rospy.Subscriber('/odom', Odometry, queue_size=10)
 
-    # frequency rate
-    rate = rospy.Rate(1)
+    # PID parameters
+    param = [1, 0, 0]
+
+    # PID Errors
+    err = [0, 0]
 
     # call function runner
-    runner()
+    runner(param, err)
 
-    rate.sleep()
+    rospy.spin()
