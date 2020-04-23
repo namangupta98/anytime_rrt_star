@@ -2,6 +2,25 @@ import numpy as np
 import cv2
 pi = np.pi
 
+class pid():
+
+	def __init__(self, p, i, d):
+
+		self.p = p
+		self.i = i
+		self.d = d
+
+		self.prev_error= 0
+		self.sum_ = 0
+
+	def control(self, eror):
+		u = self.p*error + self.d*(error - prev_error) + self.i*sum_
+
+		self.sum_ += error
+		self.prev_error = error
+
+		return u
+
 class point():
 	'''
 	Class for defining the state as (x,y, theta) with theta in radians 
