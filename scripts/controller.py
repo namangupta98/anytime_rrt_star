@@ -5,11 +5,16 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 import rospkg
 import sys
+import math
 
-global param, err
+# global param, err
+
+# waypoints
+waypoints = [(-4, -4), (-4, -3), (-3, -2)]
+way_n = 0
 
 # PID parameters
-param = [1, 0, 0]
+param = [10, 0.1, 0]
 
 # PID Errors
 err = [0, 0]
@@ -22,19 +27,24 @@ def getCTE(current_pose):
     # current_pose = current_pose_
 
     # coordinates of start point
-    start_pose = (-4, -4)
+    start_pose = waypoints[way_n]
+    print('start_pose', start_pose)
 
     # coordinates of goal point
-    goal_pose = (-4, -3)
+    goal_pose = waypoints[way_n+1]
+    print('goal_pose', goal_pose)
 
-    # Kp error
+    # cross-track error
     cte = (((current_pose[1] - start_pose[1]) * (goal_pose[0] - start_pose[0])) -
-           ((current_pose[0] - start_pose[0]) * (goal_pose[1] - start_pose[0]))) / \
+           ((current_pose[0] - start_pose[0]) * (goal_pose[1] - start_pose[1]))) / \
           (((goal_pose[0] - start_pose[0]) ** 2) + ((goal_pose[1] - start_pose[1]) ** 2))
 
-    # cte_ = cte
+    # percentage path covered b/w waypoints
+    distance = (((current_pose[0] - start_pose[0]) * (goal_pose[0] - start_pose[0])) +
+                ((current_pose[1] - start_pose[1]) * (goal_pose[1] - start_pose[1]))) / \
+                (((goal_pose[0] - start_pose[0]) ** 2) + ((goal_pose[1] - start_pose[1]) ** 2))
 
-    return -cte
+    return -cte, distance
 
 
 # function to get angular velocity
@@ -52,41 +62,25 @@ def control(error):
     return omega
 
 
-# function to move turtlebot3
-# def runner(parameters, errors):
-#
-#     # declaring object for class Twist
-#     # msg = Twist()
-#
-#
-#
-#     # loop rate
-#     # rate = rospy.Rate(1)
-#
-#
-#
-#     # publish angular velocity
-#     rospy.loginfo(msg)
-#
-#     # rate.sleep()
-
-# function to update waypoints
-def update():
-    if current_pose == waypoints[way_n]:
-        way_n += 1
-
-
 # function to callback subscriber node
 def callback_odom(odom):
-    # global current_pose_
+
+    global way_n
+
+    # declaring object
     msg = Twist()
 
     # current position stored
     current_pose = (odom.pose.pose.position.x, odom.pose.pose.position.y)
 
     # get error
-    error = getCTE(current_pose)
-    print('error', error)
+    error, dist = getCTE(current_pose)
+    print('error: ', error)
+    print('distance: ', dist)
+
+    if dist > 1:
+        # update waypoints
+        way_n += 1
 
     # getting angular velocity
     angular_velocity = control(error)
@@ -100,11 +94,8 @@ def callback_odom(odom):
     pub.publish(msg)
 
 
+# main function
 if __name__ == '__main__':
-
-    waypoints = [(-4, -4), (-4, -3), (-4, -2), (-3, -2)]
-
-    way_n = 0
 
     # initialize node
     rospy.init_node('controller', anonymous=True)
@@ -116,7 +107,3 @@ if __name__ == '__main__':
     sub = rospy.Subscriber('/odom', Odometry, callback_odom)
 
     rospy.spin()
-
-    # call function runner
-    # while not rospy.is_shutdown():
-    #     runner(param, err)
