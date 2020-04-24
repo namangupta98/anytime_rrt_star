@@ -4,6 +4,7 @@
   <arg name="y_pos" default="-4"/>
   <arg name="z_pos" default="0.0"/>
   <arg name="theta" default="0.0"/>
+  <arg name="node_start_delay" default="7.0" />
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name"  value="$(find anytime_rrt-star)/worlds/map.world"/>
@@ -17,4 +18,12 @@
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_burger.urdf.xacro" />
 
   <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf"  args="-urdf -model turtlebot3_burger -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -Y $(arg theta) -param robot_description" />
+
+  <!-- <node 
+	name = "controller" 
+	pkg = "anytime_rrt-star" 
+	type = "controller.py"
+	launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "
+  	/> -->
+
 </launch>
