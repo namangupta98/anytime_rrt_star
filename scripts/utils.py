@@ -187,8 +187,8 @@ def rrt_star(start, goal, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.1,wr = 0.06
 	'''
 	
 	state = [start]
-	backt	backtrack = {}
-rack = {}
+	backtrack = {}
+	rack = {}
 	cost = {start:0}
 	
 	if visualisation:
