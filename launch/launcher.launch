@@ -7,7 +7,7 @@
   <arg name="node_start_delay" default="7.0" />
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name"  value="$(find anytime_rrt-star)/worlds/map.world"/>
+    <arg name="world_name"  value="$(find anytime_rrt_star)/worlds/map.world"/>
     <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui" value="true"/>

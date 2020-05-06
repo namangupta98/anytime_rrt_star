@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(anytime_rrt-star)
+project(anytime_rrt_star)
 
 # Find catkin and any catkin packages
 find_package(
