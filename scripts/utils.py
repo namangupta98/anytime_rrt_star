@@ -2,6 +2,25 @@ import numpy as np
 import cv2
 pi = np.pi
 
+class pid():
+
+	def __init__(self, p, i, d):
+
+		self.p = p
+		self.i = i
+		self.d = d
+
+		self.prev_error= 0
+		self.sum_ = 0
+
+	def control(self, eror):
+		u = self.p*error + self.d*(error - prev_error) + self.i*sum_
+
+		self.sum_ += error
+		self.prev_error = error
+
+		return u
+
 class point():
 	'''
 	Class for defining the state as (x,y, theta) with theta in radians 
@@ -18,6 +37,25 @@ class point():
          return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
     def __str__(self):
         return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
+    def is_same(self, p):
+        return p.x==self.x and p.y == self.y and p.t == self.t
+
+def euc_dist(p1, p2):
+    return (p1.x-p2.x)**2 + (p1.y-p2.y)**2
+
+def config_dist(start, goal,alpha = 2):
+    angle = np.arctan2((goal.y-start.y),(goal.x-start.x+0.01))
+    angle = min(abs(angle - start.t),2*pi - abs(angle - start.t))
+    return euc_dist(start, goal) + alpha*angle
+
+
+def best_node(p, cost_map):
+    cost = np.inf
+    for i in range(len(p)):
+        if cost> cost_map[p[i]]:
+            cost = cost_map[p[i]]
+            index = i
+    return p[index]
 
 def nearest_point(p, point, alpha = 5):
 	'''
@@ -34,13 +72,19 @@ def nearest_point(p, point, alpha = 5):
     dist = np.inf
     index = -1
     for i in range(len(p)):
-        angle = np.arctan2((point.y-p[i].y),(point.x-p[i].x+0.01))
-        angle = min(abs(angle - point.t),2*pi - abs(angle - point.t))
-        new_dist = (point.x-p[i].x)**2 + (point.y-p[i].y)**2 + alpha*angle
+#         angle = np.arctan2((point.y-p[i].y),(point.x-p[i].x+0.01))
+#         angle = min(abs(angle - point.t),2*pi - abs(angle - point.t))
+        new_dist = euc_dist(p[i], point)
         if dist> new_dist:
             index = i
             dist = new_dist
     return p[index]
+
+def nearest_neighbours(p, point, radius=  0.5):
+    neighbours =  []
+    for i in p: 
+        if radius*radius > euc_dist(i, point): neighbours.append(i)
+    return neighbours
 
 def in_obstacle(cur_point,r,c):
 	'''
@@ -126,3 +170,74 @@ for i in range(2000):
 cv2.destroyAllWindows()
 
 '''
+
+def rrt_star(goal,start, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.06,wr = 0.066,l = 0.16, visualisation = True):
+	'''
+	Implements RRT*
+	input:
+
+	goal -> point object with goal cordinates
+	start-> point object with goal cordinates
+	rp1, rpm2-> wheel angular speeds
+	theshold-> how close we should reach the goal
+	r,c,wr,l -> robot radius, clearance, wheel radius, wheel distance
+	visualization -> (bool) if true, shows the animation
+	'''
+    
+    state = [start]
+    backtrack = {}
+    cost = {start:0}
+    
+    if visualisation:
+        img = np.ones((200,200,3))*255
+        cv2.circle(img, (int(state[0].x*20)+100,int(state[0].y*20)+100),5, (255,255,0), -1)
+        cv2.circle(img, (int(goal.x*20)+100,int(goal.y*20)+100),int(threshold*20), (255,0,255), -1)
+
+    print('starting search')
+    while euc_dist(state[-1], goal)**0.5> threshold:
+        
+        rndm_node = point(np.random.normal(goal.x,0.1),np.random.normal(goal.y,0.1),np.random.random()*2*pi-pi)
+#         rndm_node = point(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2*pi-pi)
+        nn = nearest_point(state, rndm_node)
+        children = get_children(nn, rpm1,rpm2,r,c,wr,l, dt = 1)
+        
+        
+        if len(children)!=0: 
+            
+            nearest_child = nearest_point(children, rndm_node)
+            neighbours = nearest_neighbours(state, nearest_child, radius = 1.5)
+            parent = best_node(neighbours, cost)
+
+            backtrack[nearest_child] = parent
+            cost[nearest_child] = cost[parent]+1
+            state.append(nearest_child)
+            
+            
+            if visualisation:
+                img = cv2.line(img,(int(parent.x*20)+100,int(parent.y*20)+100),\
+                               (int(nearest_child.x*20)+100,int(nearest_child.y*20)+100),(255,0,0), 1)
+                cv2.imshow('rrt', img)
+                cv2.waitKey(20)
+    print('search ended, started backtracking')
+    
+    
+    goal = state[-1]
+    while not goal.is_same(state[0]):
+        
+        
+        back = backtrack[goal]
+        
+        if visualisation:
+            img = cv2.line(img,(int(back.x*20)+100,int(back.y*20)+100),\
+                           (int(goal.x*20)+100,int(goal.y*20)+100),(0,0,255), 2)
+            cv2.imshow('rrt', img)
+            cv2.waitKey(20)
+        
+        goal = back
+    
+    if visualisation:
+        cv2.imshow('rrt', img)
+        cv2.waitKey(5000)
+        cv2.destroyAllWindows()
+    
+    return cost[state[-1]]
