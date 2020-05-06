@@ -2,24 +2,28 @@ import numpy as np
 import cv2
 pi = np.pi
 
-class pid():
 
-	def __init__(self, p, i, d):
+def img2cart(i,j):
+	return (j-100)*1.0/20, (100-i)*1.0/20
 
-		self.p = p
-		self.i = i
-		self.d = d
+def cart2img(x,y):
+	return 100-y*20,x*20+100
+# if cost[nearest child]>11:
+				# dont append
+			# if cost is < 11:
+# class node:
+# 	def __init__(self, parent, childs, x,y):
+# 		slef.value = (x,y)#cordiante
+# 		self.parent = node()
+# 		self.children = [i for i in childs]
 
-		self.prev_error= 0
-		self.sum_ = 0
 
-	def control(self, eror):
-		u = self.p*error + self.d*(error - prev_error) + self.i*sum_
+# class tree:
+# 	def __init__(self, root):
+# 		self.root = node(root)
 
-		self.sum_ += error
-		self.prev_error = error
+# new_tree= tree(New_node)
 
-		return u
 
 class point():
 	'''
@@ -28,34 +32,34 @@ class point():
 	>>> print(a)
 	... Point(0.00,1.00,0.00)
 	'''
-    def __init__(self, x,y, t):
-        self.x = x
-        self.y = y
-        self.t = t
-        
-    def __repr__(self):
-         return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
-    def __str__(self):
-        return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
-    def is_same(self, p):
-        return p.x==self.x and p.y == self.y and p.t == self.t
+	def __init__(self, x,y, t):
+		self.x = x
+		self.y = y
+		self.t = t
+
+	def __repr__(self):
+		return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
+	def __str__(self):
+		return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
+	def is_same(self, p):
+		return p.x==self.x and p.y == self.y and p.t == self.t
 
 def euc_dist(p1, p2):
-    return (p1.x-p2.x)**2 + (p1.y-p2.y)**2
+	return (p1.x-p2.x)**2 + (p1.y-p2.y)**2
 
 def config_dist(start, goal,alpha = 2):
-    angle = np.arctan2((goal.y-start.y),(goal.x-start.x+0.01))
-    angle = min(abs(angle - start.t),2*pi - abs(angle - start.t))
-    return euc_dist(start, goal) + alpha*angle
+	angle = np.arctan2((goal.y-start.y),(goal.x-start.x+0.01))
+	angle = min(abs(angle - start.t),2*pi - abs(angle - start.t))
+	return euc_dist(start, goal) + alpha*angle
 
 
 def best_node(p, cost_map):
-    cost = np.inf
-    for i in range(len(p)):
-        if cost> cost_map[p[i]]:
-            cost = cost_map[p[i]]
-            index = i
-    return p[index]
+	cost = np.inf
+	for i in range(len(p)):
+		if cost> cost_map[p[i]]:
+			cost = cost_map[p[i]]
+			index = i
+	return p[index]
 
 def nearest_point(p, point, alpha = 5):
 	'''
@@ -69,22 +73,20 @@ def nearest_point(p, point, alpha = 5):
 	returns
 	point obejct which is closest to 'point'
 	'''
-    dist = np.inf
-    index = -1
-    for i in range(len(p)):
-#         angle = np.arctan2((point.y-p[i].y),(point.x-p[i].x+0.01))
-#         angle = min(abs(angle - point.t),2*pi - abs(angle - point.t))
-        new_dist = euc_dist(p[i], point)
-        if dist> new_dist:
-            index = i
-            dist = new_dist
-    return p[index]
+	dist = np.inf
+	index = -1
+	for i in range(len(p)):
+		new_dist = euc_dist(p[i], point)
+		if dist> new_dist:
+			index = i
+			dist = new_dist
+	return p[index]
 
 def nearest_neighbours(p, point, radius=  0.5):
-    neighbours =  []
-    for i in p: 
-        if radius*radius > euc_dist(i, point): neighbours.append(i)
-    return neighbours
+	neighbours =  []
+	for i in p: 
+		if radius*radius > euc_dist(i, point): neighbours.append(i)
+	return neighbours
 
 def in_obstacle(cur_point,r,c):
 	'''
@@ -96,15 +98,15 @@ def in_obstacle(cur_point,r,c):
 	return boolean
 	'''
 	x,y = cur_point.x, cur_point.y
-    return (x)*(x) + (y)*(y) <= (1+r+c)*(1+r+c) or\
-    (x-2)*(x-2) + (y-3)*(y-3) <= (1+r+c)*(1+r+c) or\
-    (x-2)*(x-2) + (y+3)*(y+3) <= (1+r+c)*(1+r+c)or\
-    (x+2)*(x+2) + (y+3)*(y+3) <= (1+r+c)*(1+r+c) or\
-    x<-5-r-c or x>5+r+c or y<-5-r-c or y>5+r+c or\
-    (x>=-4.75-r-c and x<=-3.25+r+c and y>= -0.75-r-c and y<= 0.75+r+c) or\
-    (x>=-2.75-r-c and x<=-1.25+r+c and y>= 2.25-r-c and y<= 3.75+r+c) or\
-    (x>=3.25-r-c and x<=4.75+r+c and y>= -0.75-r-c and y<= 0.75+r+c)
-    return False
+	return (x)*(x) + (y)*(y) <= (1+r+c)*(1+r+c) or\
+	(x-2)*(x-2) + (y-3)*(y-3) <= (1+r+c)*(1+r+c) or\
+	(x-2)*(x-2) + (y+3)*(y+3) <= (1+r+c)*(1+r+c)or\
+	(x+2)*(x+2) + (y+3)*(y+3) <= (1+r+c)*(1+r+c) or\
+	x<-5+r+c or x>5-r-c or y<-5+r+c or y>5-r-c or\
+	(x>=-4.75-r-c and x<=-3.25+r+c and y>= -0.75-r-c and y<= 0.75+r+c) or\
+	(x>=-2.75-r-c and x<=-1.25+r+c and y>= 2.25-r-c and y<= 3.75+r+c) or\
+	(x>=3.25-r-c and x<=4.75+r+c and y>= -0.75-r-c and y<= 0.75+r+c)
+	return False
 
 def get_children(cur_point, rpm1, rpm2,r,c,wr,l, dt=1):
 	'''
@@ -119,37 +121,37 @@ def get_children(cur_point, rpm1, rpm2,r,c,wr,l, dt=1):
 	return 
 	a list of point instances which emerge out of this current state
 	'''
-    rpm1 = rpm1*(pi/30)
-    rpm2 = rpm2*(pi/30)
-    v =[[0,rpm1],[rpm1,0],[rpm1,rpm1],[0,rpm2],[rpm2,0],[rpm2,rpm2],[rpm1,rpm2],[rpm2,rpm1]]
-    children = []
-    for i in range(8):
-        ul = v[i][0]*wr
-        ur = v[i][1]*wr
-        
-        if(ul==ur):
-            new_state = point(cur_point.x+ul*dt*np.cos(cur_point.t)\
-                             ,cur_point.y+ul*dt*np.sin(cur_point.t), \
-                              cur_point.t)
-        else:
-            omega = (ur-ul)/l
-            
-            ir = (ur+ul)/(2*omega)
-            
-            iccx = cur_point.x - ir*np.sin(cur_point.t)
-            iccy = cur_point.y + ir*np.cos(cur_point.t)
-            
-            new_state = point(0,0,0)
-            new_state.x = (cur_point.x-iccx)*np.cos(omega*dt)-(cur_point.y-iccy)*np.sin(omega*dt)+iccx
-            new_state.y = (cur_point.x-iccx)*np.sin(omega*dt)-(cur_point.y-iccy)*np.cos(omega*dt)+iccy
-            new_state.t = omega*dt + cur_point.t
-            
-        while new_state.t<-pi: new_state.t +=2*pi
-        while new_state.t>pi: new_state.t -=2*pi
-            
-        if not in_obstacle(new_state): children.append(new_state)
-        
-    return children 
+	rpm1 = rpm1*(pi/30)
+	rpm2 = rpm2*(pi/30)
+	v =[[0,rpm1],[rpm1,0],[rpm1,rpm1],[0,rpm2],[rpm2,0],[rpm2,rpm2],[rpm1,rpm2],[rpm2,rpm1]]
+	children = []
+	for i in range(8):
+		ul = v[i][0]*wr
+		ur = v[i][1]*wr
+		
+		if(ul==ur):
+			new_state = point(cur_point.x+ul*dt*np.cos(cur_point.t)\
+							 ,cur_point.y+ul*dt*np.sin(cur_point.t), \
+							  cur_point.t)
+		else:
+			omega = (ur-ul)/l
+			
+			ir = (ur+ul)/(2*omega)
+			
+			iccx = cur_point.x - ir*np.sin(cur_point.t)
+			iccy = cur_point.y + ir*np.cos(cur_point.t)
+			
+			new_state = point(0,0,0)
+			new_state.x = (cur_point.x-iccx)*np.cos(omega*dt)-(cur_point.y-iccy)*np.sin(omega*dt)+iccx
+			new_state.y = (cur_point.x-iccx)*np.sin(omega*dt)-(cur_point.y-iccy)*np.cos(omega*dt)+iccy
+			new_state.t = omega*dt + cur_point.t
+			
+		while new_state.t<-pi: new_state.t +=2*pi
+		while new_state.t>pi: new_state.t -=2*pi
+			
+		if not in_obstacle(new_state,r,c+0.4): children.append(new_state)
+		
+	return children 
 
 
 '''
@@ -159,19 +161,19 @@ state = [point(-4,-4,0)]
 goal = point(4,4,0)
 img = np.ones((200,200))*255
 for i in range(2000):
-    rndm_node = point(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2*pi-pi)
-    nn = nearest_point(state, rndm_node)
-    children = get_children(nn, 30, 40,0,0,0.066,0.16, dt = 1) # These values are with respect to turtlebot3 burger
-    if len(children)!=0: 
-        state.append(nearest_point(children, rndm_node))
-        img = cv2.line(img,(int(nn.x*20)+100,int(nn.y*20)+100),(int(state[-1].x*20)+100,int(state[-1].y*20)+100),0, 1)
-    cv2.imshow('rrt', img)
-    cv2.waitKey(10)
+	rndm_node = point(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2*pi-pi)
+	nn = nearest_point(state, rndm_node)
+	children = get_children(nn, 30, 40,0,0,0.066,0.16, dt = 1) # These values are with respect to turtlebot3 burger
+	if len(children)!=0: 
+		state.append(nearest_point(children, rndm_node))
+		img = cv2.line(img,(int(nn.x*20)+100,int(nn.y*20)+100),(int(state[-1].x*20)+100,int(state[-1].y*20)+100),0, 1)
+	cv2.imshow('rrt', img)
+	cv2.waitKey(10)
 cv2.destroyAllWindows()
 
 '''
 
-def rrt_star(goal,start, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.06,wr = 0.066,l = 0.16, visualisation = True):
+def rrt_star(start, goal, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.1,wr = 0.066,l = 0.16, visualisation = True):
 	'''
 	Implements RRT*
 	input:
@@ -183,61 +185,79 @@ def rrt_star(goal,start, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.06,wr = 0.06
 	r,c,wr,l -> robot radius, clearance, wheel radius, wheel distance
 	visualization -> (bool) if true, shows the animation
 	'''
-    
-    state = [start]
-    backtrack = {}
-    cost = {start:0}
-    
-    if visualisation:
-        img = np.ones((200,200,3))*255
-        cv2.circle(img, (int(state[0].x*20)+100,int(state[0].y*20)+100),5, (255,255,0), -1)
-        cv2.circle(img, (int(goal.x*20)+100,int(goal.y*20)+100),int(threshold*20), (255,0,255), -1)
+	
+	state = [start]
+	backt	backtrack = {}
+rack = {}
+	cost = {start:0}
+	
+	if visualisation:
+		img = np.ones((200,200,3))*255
+		startx, starty = cart2img(state[0].x,state[0].y)
+		goalx, goaly = cart2img(goal.x,goal.y)
+		cv2.circle(img, (int(starty), int(startx)) ,5, (255,255,0), -1)
+		cv2.circle(img, (int(goaly),  int(goalx)),int(threshold*20), (255,0,255), -1)
+		for i in range(img.shape[0]):
+			for j in range(img.shape[1]):
+				x,y = img2cart(i,j)
+				obs_point = point(x,y,0)
+				if in_obstacle(obs_point,r,c): img[i,j,:] = [0,0,0]
 
-    print('starting search')
-    while euc_dist(state[-1], goal)**0.5> threshold:
-        
-        rndm_node = point(np.random.normal(goal.x,0.1),np.random.normal(goal.y,0.1),np.random.random()*2*pi-pi)
-#         rndm_node = point(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2*pi-pi)
-        nn = nearest_point(state, rndm_node)
-        children = get_children(nn, rpm1,rpm2,r,c,wr,l, dt = 1)
-        
-        
-        if len(children)!=0: 
-            
-            nearest_child = nearest_point(children, rndm_node)
-            neighbours = nearest_neighbours(state, nearest_child, radius = 1.5)
-            parent = best_node(neighbours, cost)
+	print('starting search')
+	while euc_dist(state[-1], goal)**0.5> threshold:
+		
+		# rndm_node = point(np.random.normal(goal.x,10),np.random.normal(goal.y,10),np.random.random()*2*pi-pi)
+		rndm_node = point(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2*pi-pi)
+		nn = nearest_point(state, rndm_node)
+		children = get_children(nn, rpm1,rpm2,r,c,wr,l, dt = 1)
+		
+		
+		if len(children)!=0: 
+			
+			nearest_child = nearest_point(children, rndm_node) # create node, vlue, parent, children
+			neighbours = nearest_neighbours(state, nearest_child, radius = 1.5)
+			parent = best_node(neighbours, cost)
 
-            backtrack[nearest_child] = parent
-            cost[nearest_child] = cost[parent]+1
-            state.append(nearest_child)
-            
-            
-            if visualisation:
-                img = cv2.line(img,(int(parent.x*20)+100,int(parent.y*20)+100),\
-                               (int(nearest_child.x*20)+100,int(nearest_child.y*20)+100),(255,0,0), 1)
-                cv2.imshow('rrt', img)
-                cv2.waitKey(20)
-    print('search ended, started backtracking')
-    
-    
-    goal = state[-1]
-    while not goal.is_same(state[0]):
-        
-        
-        back = backtrack[goal]
-        
-        if visualisation:
-            img = cv2.line(img,(int(back.x*20)+100,int(back.y*20)+100),\
-                           (int(goal.x*20)+100,int(goal.y*20)+100),(0,0,255), 2)
-            cv2.imshow('rrt', img)
-            cv2.waitKey(20)
-        
-        goal = back
-    
-    if visualisation:
-        cv2.imshow('rrt', img)
-        cv2.waitKey(5000)
-        cv2.destroyAllWindows()
-    
-    return cost[state[-1]]
+			backtrack[nearest_child] = parent
+			# nearest_child.parent = parent
+			#parent.children.append(nearest_child)
+			cost[nearest_child] = cost[parent]+1
+			# if cost[nearest child]>11:
+				# dont append
+			# if cost is < 11:
+			state.append(nearest_child)
+			
+			
+			if visualisation:
+				parentx, parenty = cart2img(parent.x, parent.y)
+				childx, childy = cart2img(nearest_child.x,nearest_child.y)
+				img = cv2.line(img,(int(parenty),int(parentx)),\
+							   (int(childy),int(childx)),(255,0,0), 1)
+				cv2.imshow('rrt', img)
+				cv2.waitKey(20)
+	print('search ended, started backtracking')
+	
+	
+	goal = state[-1]
+	waypoints = [goal]
+	while not goal.is_same(state[0]):
+		
+		back = backtrack[goal]
+		
+		if visualisation:
+			backx, backy = cart2img(back.x,back.y)
+			goalx, goaly = cart2img(goal.x,goal.y)
+			img = cv2.line(img,(int(backy),int(backx)),\
+						   (int(goaly),int(goalx)),(0,0,255), 2)
+			cv2.imshow('rrt', img)
+			cv2.waitKey(20)
+		
+		goal = back
+		waypoints.append(goal)
+	
+	if visualisation:
+		cv2.imshow('rrt', img)
+		cv2.waitKey(1000)
+		# cv2.destroyAllWindows()
+	
+	return waypoints[::-1]
