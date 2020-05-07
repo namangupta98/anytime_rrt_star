@@ -8,57 +8,70 @@ def img2cart(i,j):
 
 def cart2img(x,y):
 	return 100-y*20,x*20+100
-# if cost[nearest child]>11:
-				# dont append
-			# if cost is < 11:
-# class node:
-# 	def __init__(self, parent, childs, x,y):
-# 		slef.value = (x,y)#cordiante
-# 		self.parent = node()
-# 		self.children = [i for i in childs]
 
 
-# class tree:
-# 	def __init__(self, root):
-# 		self.root = node(root)
-
-# new_tree= tree(New_node)
-
-
-class point():
-	'''
-	Class for defining the state as (x,y, theta) with theta in radians 
-	>>> a = point(0,1,0)
-	>>> print(a)
-	... Point(0.00,1.00,0.00)
-	'''
-	def __init__(self, x,y, t):
+class node():
+	def __init__(self,x,y,t, parent=None):
+		# assert isinstance(cord, point)
+		assert isinstance(parent, node) or parent == None
 		self.x = x
 		self.y = y
 		self.t = t
+		self.parent = parent
+		self.cost = 0
+		self.children = []
 
+	def add_child(self, cord):
+		assert isinstance(cord, node)
+		self.children.append(cord)
+		cord.parent = self
 	def __repr__(self):
-		return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
+		return 'Node({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
 	def __str__(self):
-		return 'Point({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
+		return 'Node({:.2f},{:.2f},{:.2f})'.format(self.x,self.y,self.t)
 	def is_same(self, p):
 		return p.x==self.x and p.y == self.y and p.t == self.t
+
+class tree():
+	def __init__(self, root):
+		assert isinstance(root, node)
+		self.root = root
+		self.state = []
+		self.add_children(root)
+
+	def add_children(self, node):
+		self.state.append(node)
+		for i in node.children:
+			self.add_children(i)
+
+	def size(self):
+		return len(self.state)
+
+	def update_cost(self, node):
+		for i in node.children:
+			if i.parent != node:
+				node.children.remove(i)
+			else:
+				i.cost = node.cost+euc_dist(i, node)
+				self.update_cost(i)
+
+	def reconfigure(self, radius):
+		for i in self.state:
+			neighbours = nearest_neighbours(self.state, i, radius = radius)
+			parent = best_node(neighbours)
+			i.parent = parent
+
+		self.update_cost(self.root)
 
 def euc_dist(p1, p2):
 	return (p1.x-p2.x)**2 + (p1.y-p2.y)**2
 
-def config_dist(start, goal,alpha = 2):
-	angle = np.arctan2((goal.y-start.y),(goal.x-start.x+0.01))
-	angle = min(abs(angle - start.t),2*pi - abs(angle - start.t))
-	return euc_dist(start, goal) + alpha*angle
-
-
-def best_node(p, cost_map):
+def best_node(p):
 	cost = np.inf
 	for i in range(len(p)):
-		if cost> cost_map[p[i]]:
-			cost = cost_map[p[i]]
+		if cost> p[i].cost:
 			index = i
+			cost = p[i].cost
 	return p[index]
 
 def nearest_point(p, point, alpha = 5):
@@ -130,7 +143,7 @@ def get_children(cur_point, rpm1, rpm2,r,c,wr,l, dt=1):
 		ur = v[i][1]*wr
 		
 		if(ul==ur):
-			new_state = point(cur_point.x+ul*dt*np.cos(cur_point.t)\
+			new_state = node(cur_point.x+ul*dt*np.cos(cur_point.t)\
 							 ,cur_point.y+ul*dt*np.sin(cur_point.t), \
 							  cur_point.t)
 		else:
@@ -141,7 +154,7 @@ def get_children(cur_point, rpm1, rpm2,r,c,wr,l, dt=1):
 			iccx = cur_point.x - ir*np.sin(cur_point.t)
 			iccy = cur_point.y + ir*np.cos(cur_point.t)
 			
-			new_state = point(0,0,0)
+			new_state = node(0,0,0)
 			new_state.x = (cur_point.x-iccx)*np.cos(omega*dt)-(cur_point.y-iccy)*np.sin(omega*dt)+iccx
 			new_state.y = (cur_point.x-iccx)*np.sin(omega*dt)-(cur_point.y-iccy)*np.cos(omega*dt)+iccy
 			new_state.t = omega*dt + cur_point.t
@@ -172,9 +185,9 @@ for i in range(2000):
 cv2.destroyAllWindows()
 
 '''
-
+'''
 def rrt_star(start, goal, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.1,wr = 0.066,l = 0.16, visualisation = True):
-	'''
+	
 	Implements RRT*
 	input:
 
@@ -184,11 +197,14 @@ def rrt_star(start, goal, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.1,wr = 0.06
 	theshold-> how close we should reach the goal
 	r,c,wr,l -> robot radius, clearance, wheel radius, wheel distance
 	visualization -> (bool) if true, shows the animation
-	'''
 	
+
 	state = [start]
 	backtrack = {}
+<<<<<<< HEAD
+=======
 	rack = {}
+>>>>>>> 2795e4d6974317e73698486ba8261747e7afcc97
 	cost = {start:0}
 	
 	if visualisation:
@@ -261,3 +277,10 @@ def rrt_star(start, goal, rpm1, rpm2, threshold = 0.35,r = 0.105,c=0.1,wr = 0.06
 		# cv2.destroyAllWindows()
 	
 	return waypoints[::-1]
+
+def config_dist(start, goal,alpha = 2):
+	angle = np.arctan2((goal.y-start.y),(goal.x-start.x+0.01))
+	angle = min(abs(angle - start.t),2*pi - abs(angle - start.t))
+	return euc_dist(start, goal) + alpha*angle
+
+'''
