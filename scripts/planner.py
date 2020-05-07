@@ -20,13 +20,14 @@ class rrtplanner():
 		self.l = 0.16
 		#,r = 0.105,c=0.1,wr = 0.066,l = 0.16
 
-	def grow_tree(self):
+	def grow_tree(self, func = 1):
 
 		added = False
 		while not added:
-			# rndm_node = node(np.random.normal(self.goal.x,10),np.random.normal(self.goal.y,10),np.random.random()*2*pi-pi)
-			# rndm_node = node(np.random.randint(-5,5),np.random.randint(-5,5),np.random.random()*2* pi-pi)
-			rndm_node = node(np.random.random()*10-5,np.random.random()*10-5,np.random.random()*2*pi-pi)
+			if func:
+				rndm_node = node(np.random.normal(self.goal.x,10),np.random.normal(self.goal.y,10),np.random.random()*2*pi-pi)
+			else:
+				rndm_node = node(np.random.random()*10-5,np.random.random()*10-5,np.random.random()*2*pi-pi)
 			nn = nearest_point(self.rrttree.state, rndm_node)
 			children = get_children(nn, 30,20,self.r,self.c,self.wr,self.l, dt = 1)
 			if len(children)!=0:
@@ -95,25 +96,25 @@ class rrtplanner():
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
 		
-start = node(-4,-4,0)
+# start = node(-4,-4,0)
 
-rrtree = tree(start)
+# rrtree = tree(start)
 
-planner = rrtplanner(rrtree, node(4,4,0))
+# planner = rrtplanner(rrtree, node(4,4,0))
 
-planner.plan()
-waypoints = planner.get_waypoints()
-print(planner.rrttree.size())
-print(planner.best_path())
+# planner.plan()
+# waypoints = planner.get_waypoints()
+# print(planner.rrttree.size())
+# print(planner.best_path())
 
-planner.visualise()
+# planner.visualise()
 
-rrtree = tree(waypoints[4])
-planner = rrtplanner(rrtree, node(4,4,0), possible_paths =  planner.possible_paths)
-planner.plan()
-for i in range(1000):
-	planner.grow_tree()
-planner.reconfigure()
-print(planner.rrttree.size())
-print(planner.best_path())
-planner.visualise()
+# rrtree = tree(waypoints[4])
+# planner = rrtplanner(rrtree, node(4,4,0), possible_paths =  planner.possible_paths)
+# planner.plan()
+# for i in range(1000):
+# 	planner.grow_tree(func = 0)
+# planner.reconfigure()
+# print(planner.rrttree.size())
+# print(planner.best_path())
+# planner.visualise()

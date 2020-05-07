@@ -1,12 +1,19 @@
 #! /usr/bin/env python
 
 import rospy
-from utils import *
+from time import time
+from planner import *
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 import rospkg
 import sys
 import math
+
+start = node(4,4,0)
+goal = node(-4,-4,0)
+rrtree = tree(start)
+
+planner = rrtplanner(rrtree, goal)
 
 # global param, err
 
@@ -100,50 +107,76 @@ def control(error):
 # function to callback subscriber node
 def callback_odom(odom):
 
-	global way_n
+	global way_n, planner, rrtree, goal, waypoints
 
 	# declaring object
-	msg = Twist()
+	try:
+		msg = Twist()
 
-	# current position stored
-	current_pose = (odom.pose.pose.position.x, odom.pose.pose.position.y)
+		# current position stored
+		current_pose = (odom.pose.pose.position.x, odom.pose.pose.position.y)
 
-	# get error
-	dist = getCTE(current_pose)
+		# get error
+		dist = getCTE(current_pose)
 
-	yaw = quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,\
-	odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)
+		yaw = quaternion_to_euler(odom.pose.pose.orientation.x,odom.pose.pose.orientation.y,\
+		odom.pose.pose.orientation.z,odom.pose.pose.orientation.w)
 
-	error = yawE(odom.pose.pose.position.x, odom.pose.pose.position.y, yaw, odom.twist.twist.angular.z)
+		error = yawE(odom.pose.pose.position.x, odom.pose.pose.position.y, yaw, odom.twist.twist.angular.z)
 
-	if dist > 1:
-	# update waypoints
-		way_n += 1
-		print('Current Waypoint id: ', way_n)
-		## Get new path
-		## global waypoints = [new_points]
-		if way_n>= len(waypoints)-1:
-			print("GOAL REACHED")
-			msg.angular.z = 0
-			msg.linear.x = 0
-			pub.publish(msg)
-			cv2.destroyAllWindows()
-			rospy.signal_shutdown("Goal Reached")
 
-	# getting angular velocity
-	angular_velocity = control(error)
-	# assign angular velocity
-	msg.angular.z = angular_velocity
-	msg.linear.x = 0.15
+		if dist > 1:
+		# update waypoints
+			way_n += 1
+			print('Current Waypoint id: ', way_n)
+			## Get new path
+			rrtree = tree(waypoints[way_n+1])
 
-	# publishing
-	pub.publish(msg)
+			planner = rrtplanner(rrtree, goal, possible_paths =  planner.possible_paths)
+
+			planner.plan()
+
+			waypoints = planner.get_waypoints()	
+			print(waypoints[-1].cost)
+			if way_n>= len(waypoints)-1:
+				print("GOAL REACHED")
+				msg.angular.z = 0
+				msg.linear.x = 0
+				pub.publish(msg)
+				cv2.destroyAllWindows()
+				rospy.signal_shutdown("Goal Reached")
+				sys.exit(1)
+
+		# getting angular velocity
+		angular_velocity = control(error)
+		# assign angular velocity
+		msg.angular.z = angular_velocity
+		msg.linear.x = 0.15
+
+		# publishing
+		pub.publish(msg)
+
+	except:
+		msg = Twist()
+		msg.angular.z = 0
+		msg.linear.x = 0
+		pub.publish(msg)
+		rospy.signal_shutdown("Goal Reached")
+		sys.exit(1)
 
 
 # main function
 if __name__ == '__main__':
 
-	waypoints = rrt_star(point(-4,-4,0), point(4,4,0), 30,20)
+	start_time = time()
+	
+
+	planner.plan()
+
+	waypoints = planner.get_waypoints()
+	print(waypoints[-1].cost)
+	end = time()
+	print("Done Planning, Time Taken: {}".format(time()-start_time))
 	# initialize node
 	rospy.init_node('controller', anonymous=True)
 
@@ -152,5 +185,8 @@ if __name__ == '__main__':
 
 	# initialize subscriber node to get robot's odometry
 	sub = rospy.Subscriber('/odom', Odometry, callback_odom)
+	i = 1
+	while 1:
+		planner.grow_tree(func = 0)
 
 	rospy.spin()
