@@ -9,8 +9,14 @@ import rospkg
 import sys
 import math
 
-start = node(4,4,0)
-goal = node(-4,-4,0)
+flag  = 0
+
+if flag:
+	start = node(4,4,0)
+	goal = node(-4,-4,0)
+else:
+	goal = node(4,4,0)
+	start = node(-4,-4,0)
 rrtree = tree(start)
 
 planner = rrtplanner(rrtree, goal)
@@ -130,13 +136,17 @@ def callback_odom(odom):
 			way_n += 1
 			print('Current Waypoint id: ', way_n)
 			## Get new path
+			# planner.reconfigure()
 			rrtree = tree(waypoints[way_n+1])
 
-			planner = rrtplanner(rrtree, goal, possible_paths =  planner.possible_paths)
+			planner = rrtplanner(rrtree, goal, possible_paths =  planner.possible_paths, draw = planner.img)
 
 			planner.plan()
-
-			waypoints = planner.get_waypoints()	
+			waypoints = planner.get_waypoints()
+			img = planner.update_img()
+			# img = np.ones((self.size,self.size,3))*255
+			cv2.imshow("Map", img)
+			cv2.waitKey(1000)
 			print(waypoints[-1].cost)
 			if way_n>= len(waypoints)-1:
 				print("GOAL REACHED")

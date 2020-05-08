@@ -3,11 +3,11 @@ import cv2
 pi = np.pi
 
 
-def img2cart(i,j):
-	return (j-100)*1.0/20, (100-i)*1.0/20
+def img2cart(i,j, size = 200):
+	return (j-size/2.0)*1.0*10/size, (size*1.0/2-i)*1.0*10/size
 
-def cart2img(x,y):
-	return 100-y*20,x*20+100
+def cart2img(x,y, size = 200):
+	return size/2.0-y*1.0*size/10.0,x*size/10.0+size/2.0
 
 
 class node():
