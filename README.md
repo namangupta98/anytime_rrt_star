@@ -42,4 +42,4 @@ rosrun anytime_rrt_star controller.py
 
 ## Results
 We used Pure Pursuit Controller to navigate the robot from each waypoint starting from start point to goal point. 
-[Report](https://github.com/namangupta98/anytime_rrt_star/blob/master/docs/Final_Project_Proposal_ENPM661.pdf)
+[Report](https://github.com/namangupta98/anytime_rrt_star/blob/master/docs/Planning_Final_Project_Report.pdf)
